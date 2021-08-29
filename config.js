@@ -1,8 +1,8 @@
 module.exports = {
   https: {
-    cert: "../cert/cert.pem",
-    certKey: "../cert/key.pem",
-    port: 8080,
+    cert: "./cert/cert.pem",
+    certKey: "./cert/key.pem",
+    port: 443,
     wsPath: "/server",
     wsPingInterval: 25000,
     wsPingTimeout: 5000,
