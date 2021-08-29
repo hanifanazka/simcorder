@@ -122,3 +122,4 @@ cert/*
 !cert/key.pem
 !cert/cert.pem
 .well-known/ # acme challange
+client-bundle.js # Build artifact
