@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta
+            name="viewport"
+            content="width=device-width, 
+        initial-scale=1.0, 
+        user-scalable=no"
+        />
+        <style>
+            #simcorder-container-draggable {
+                max-width: 200px;
+                max-height: 200px;
+                touch-action: none;
+                user-select: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="simcorder-container-draggable">
+            <img
+                style="height: auto; width: 100%"
+                src="//placekitten.com/256/144"
+            />
+        </div>
+
+        <div style="height: 1500px; width: 1500px"></div>
+        <script>
+            dragElement(
+                document.getElementById("simcorder-container-draggable")
+            );
+            function dragElement(elmnt) {
+                var pos1 = 0,
+                    pos2 = 0,
+                    pos3 = 0,
+                    pos4 = 0;
+                elmnt.addEventListener("touchstart", dragMouseDown);
+                elmnt.addEventListener("mousedown", dragMouseDown);
+                elmnt.style.position = "fixed";
+                elmnt.style.zIndex = 9;
+                function dragMouseDown(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    document.addEventListener(
+                        "touchend",
+                        closeDragElement,
+                        false
+                    );
+                    document.addEventListener("touchmove", elementDrag);
+                    document.addEventListener("mouseup", closeDragElement);
+                    document.addEventListener("mousemove", elementDrag);
+                }
+                function elementDrag(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    const clientX = e.clientX || e.touches[0].clientX;
+                    const clientY = e.clientY || e.touches[0].clientY;
+                    console.log({ clientX, clientY });
+                    pos1 = pos3 - clientX;
+                    pos2 = pos4 - clientY;
+                    pos3 = clientX;
+                    pos4 = clientY;
+                    const top = elmnt.offsetTop - pos2;
+                    const left = elmnt.offsetLeft - pos1;
+                    if (
+                        top >= 0 &&
+                        top + elmnt.getBoundingClientRect().height <=
+                            window.innerHeight
+                    ) {
+                        elmnt.style.top = top + "px";
+                    }
+                    if (
+                        left >= 0 &&
+                        left + elmnt.getBoundingClientRect().width <=
+                            window.innerWidth
+                    ) {
+                        elmnt.style.left = left + "px";
+                    }
+                }
+                function closeDragElement() {
+                    document.addEventListener("touchend", closeDragElement);
+                    document.addEventListener("touchmove", elementDrag);
+                    document.removeEventListener("mouseup", closeDragElement);
+                    document.removeEventListener("mousemove", elementDrag);
+                }
+            }
+        </script>
+    </body>
+</html>
+
