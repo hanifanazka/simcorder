@@ -8,6 +8,7 @@ const Express = require("express");
 const FFmpegStatic = require("ffmpeg-static");
 const Fs = require("fs");
 const Https = require("https");
+const Http = require("http");
 const Mediasoup = require("mediasoup");
 const SocketServer = require("socket.io");
 const Process = require("child_process");
@@ -67,12 +68,35 @@ for (const name of ["log", "info", "warn", "error"]) {
 
 // ----------------------------------------------------------------------------
 
+// HTTP server
+// ===========
+const expressAppHttp = Express()
+// expressAppHttp.use("/", Express.static(__dirname)); Used for acme challange
+expressAppHttp.get('*', function(req, res) {
+  res.redirect('https://' + req.headers.host + req.url);
+})
+const http = Http.createServer(expressAppHttp)
+http.listen(80)
+
+// ----------------------------------------------------------------------------
+
 // HTTPS server
 // ============
 {
   const expressApp = Express();
   global.server.expressApp = expressApp;
   expressApp.use("/", Express.static(__dirname));
+
+  expressApp.get("/recording", (req, res) => {
+    Fs.readdir(__dirname + "/recording", (err, files) => {
+      let html = `<!DOCTYPE html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head><body><ul>`
+      files.filter(file => /output.*/.test(file))
+        .reverse()
+        .forEach(file => html += `<li><a href="/recording/${file}">${file}</a></li>`)
+      html += "</ul></body></html>"
+      res.send(html)
+    })
+  })
 
   const https = Https.createServer(
     {
@@ -510,7 +534,7 @@ function startRecordingFfmpeg() {
   const cmdProgram = FFmpegStatic; // From package "ffmpeg-static"
 
   let cmdInputPath = `${__dirname}/recording/input-vp8.sdp`;
-  let cmdOutputPath = `${__dirname}/recording/output-ffmpeg-vp8.webm`;
+  let cmdOutputPath = `${__dirname}/recording/output-ffmpeg-vp8-${Date.now()}.webm`;
   let cmdCodec = "";
   let cmdFormat = "-f webm -flags +global_header";
 
@@ -544,7 +568,7 @@ function startRecordingFfmpeg() {
 
     if (useH264) {
       cmdInputPath = `${__dirname}/recording/input-h264.sdp`;
-      cmdOutputPath = `${__dirname}/recording/output-ffmpeg-h264.mp4`;
+      cmdOutputPath = `${__dirname}/recording/output-ffmpeg-h264-${Date.now()}.mp4`;
 
       // "-strict experimental" is required to allow storing
       // OPUS audio into MP4 container
@@ -652,7 +676,7 @@ function startRecordingGstreamer() {
   const useH264 = h264Enabled();
 
   let cmdInputPath = `${__dirname}/recording/input-vp8.sdp`;
-  let cmdOutputPath = `${__dirname}/recording/output-gstreamer-vp8.webm`;
+  let cmdOutputPath = `${__dirname}/recording/output-gstreamer-vp8-${Date.now()}.webm`;
   let cmdMux = "webmmux";
   let cmdAudioBranch = "";
   let cmdVideoBranch = "";
@@ -669,7 +693,7 @@ function startRecordingGstreamer() {
   if (useVideo) {
     if (useH264) {
       cmdInputPath = `${__dirname}/recording/input-h264.sdp`;
-      cmdOutputPath = `${__dirname}/recording/output-gstreamer-h264.mp4`;
+      cmdOutputPath = `${__dirname}/recording/output-gstreamer-h264-${Date.now()}.mp4`;
       cmdMux = `mp4mux faststart=true faststart-file=${cmdOutputPath}.tmp`;
 
       // prettier-ignore
